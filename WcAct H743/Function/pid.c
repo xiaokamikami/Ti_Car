@@ -6,14 +6,14 @@ int Pwm_add1,Pwm,Pwm_last1;                    // PWM增量，PWM输出占空比
 int Pwm_add2,Pwm,Pwm_last2;                    // PWM增量，PWM输出占空比
 float Kp = 0.13	, Ki = 0.1, Kd = 0.1;       // PID系数，这里只用到PI控制器
 
-int SpeedInnerControl1(int Target,int Speed) // 速度内环控制
+int SpeedInnerControl1(int Speed,int Target) // 速度内环控制
 {
-    int Error = Speed - Target;		  // 偏差 = 目标速度 - 实际速度
+    int Error = Target - Speed ;		  // 偏差 = 目标速度 - 实际速度
 //	if(-20.0 < Error < 20.0){
 //		Pwm = Pwm_last;
 //		return Pwm;
 //	}
-	if(Speed == 0){
+	if(Target == 0){
 		Error_Last1=0,Error_Prev1=0;
 	}	
     Pwm_add1 = Kp * (Error - Error_Last1) + 					  // 比例
@@ -30,14 +30,14 @@ int SpeedInnerControl1(int Target,int Speed) // 速度内环控制
     if(Pwm <=-1000) Pwm = -1000;
     return Pwm;	                      // 返回输出值
 } 
-int SpeedInnerControl2(int Target,int Speed) // 速度内环控制
+int SpeedInnerControl2(int Speed,int Target) // 速度内环控制
 {
-    int Error = Speed - Target;		  // 偏差 = 目标速度 - 实际速度
+    int Error = Target-Speed;		  // 偏差 = 目标速度 - 实际速度
 //	if(-20.0 < Error < 20.0){
 //		Pwm = Pwm_last;
 //		return Pwm;
 //	}
-	if(Speed == 0){
+	if(Target == 0){
 		Error_Last2=0,Error_Prev2=0;
 	}	
     Pwm_add2 = Kp * (Error - Error_Last2) + 					  // 比例
@@ -69,10 +69,10 @@ float limit;  //限幅
 static PID pid;
 void PID_Init()
 {
-    pid.kp = 0.1;
-    pid.ki = 0.2;
-    pid.kd = 0.3;
-    pid.limit = 800;
+    pid.kp = 5;
+    pid.ki = 0;
+    pid.kd = 0;
+    pid.limit = 0;
     pid.ek = 0;
     pid.ek_1 = 0;
     pid.ek_sum = 0;
