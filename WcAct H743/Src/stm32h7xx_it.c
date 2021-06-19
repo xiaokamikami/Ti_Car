@@ -59,7 +59,7 @@ extern uint8_t Mode_Set;
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim7;
 /* USER CODE BEGIN EV */
-
+extern uint8_t Star_Flag;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -208,7 +208,9 @@ void EXTI15_10_IRQHandler(void)
   /* USER CODE END EXTI15_10_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */
-
+	if(Star_Flag != 1){
+		Star_Flag = 1;
+	}
   /* USER CODE END EXTI15_10_IRQn 1 */
 }
 

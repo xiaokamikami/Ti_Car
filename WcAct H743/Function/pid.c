@@ -69,7 +69,7 @@ float limit;  //оч╥Ы
 static PID pid;
 void PID_Init()
 {
-    pid.kp = 5;
+    pid.kp = 2;
     pid.ki = 0;
     pid.kd = 0;
     pid.limit = 0;
