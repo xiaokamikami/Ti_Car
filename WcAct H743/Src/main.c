@@ -37,9 +37,9 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 static uint8_t Motor = 0;
-static uint16_t Xunlu = 0;
+static uint16_t Xunlu = 1;
 uint8_t Mode_Set = 0 ;
-uint8_t Star_Flag = 0;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -153,9 +153,10 @@ int main(void)
   CPU_CACHE_Enable();
 	double Res = 0;
 	uint8_t Res_num = 0;
+	int pwm_ab = 0;
 //	uint8_t Right_Flag = 0;
 	uint8_t Stop_Flag = 0;
-	
+	uint8_t Star_Flag = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -204,18 +205,32 @@ int main(void)
 	HAL_GPIO_WritePin(IN2_GPIO_Port,IN2_Pin,GPIO_PIN_SET);
 	HAL_GPIO_WritePin(IN3_GPIO_Port,IN3_Pin,GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(IN4_GPIO_Port,IN4_Pin,GPIO_PIN_SET);
-
+	HAL_Delay(500);
+	Star_Flag = 1;
   while (1)
   {   
+//	if(HAL_GPIO_ReadPin(KEY_GPIO_Port,KEY_Pin)==RESET){
+//		Star_Flag = 1;
+//	}
 	if(Star_Flag == 1){
 		HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
 		HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_2);
+		__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,200);
+		__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,200);
+		HAL_Delay(1);  //1ms启动电机时间
 		HAL_TIM_Base_Start_IT(&htim7);                // 使能定时器中断(10ms)
 	}
+	if(Stop_Flag == 1){
+		HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_1);
+		HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_2);
+		HAL_TIM_Base_Stop_IT(&htim7);                // 使能定时器中断(10ms)
+	}
+
 	while(Star_Flag == 1){ 
-		  /* 调速 */	  	  
-		if( Motor == 1){
-				LED_Blink(3,500);
+		  /* 调速 */	  	   
+		if( Motor == 1 &&  Xunlu==2){
+				//LED_Blink(3,500);
+
 				//*********电机1**********//
 				MotorOutput1 = SpeedInnerControl1(MotorSpeed1,SpeedTarget1);//PID控制器，取回占空比
 				
@@ -245,33 +260,61 @@ int main(void)
 
 		
 				}
-				sprintf((char *)&text,"POt1:%d,POt2:%d\r\n",abs(MotorOutput1),abs(MotorOutput2));		
-				LCD_ShowString(4, 22, 160, 14, 14, text);
+	//			sprintf((char *)&text,"POt1:%d,POt2:%d\r\n",abs(MotorOutput1),abs(MotorOutput2));		
+	//			LCD_ShowString(4, 22, 160, 14, 14, text);
 	//			sprintf((char *)&aTxBuffer,"Mpd2=%d,Mpd1=%d,",MotorSpeed2,MotorSpeed1);
 	//			HAL_UART_Transmit(&huart2, (uint8_t *)aTxBuffer, sizeof(aTxBuffer),10);
 					
 				Motor = 0;
+				Xunlu = 3;
 			}
 		
 		  /* 巡线控制 */	
 			if(	 Xunlu == 1 && Stop_Flag == 0){
-				float pwm_ab;
+
 				Res = 0;
 				Res_num = 0;
-	//			if(HAL_GPIO_ReadPin(R1_GPIO_Port,R1_Pin)==RESET)	{Res -=150;Res_num+=1;}		//左偏限位
-				if(HAL_GPIO_ReadPin(R2_GPIO_Port,R1_Pin)==RESET)	{Res -=150;Res_num+=1;}	
-				if(HAL_GPIO_ReadPin(R3_GPIO_Port,R1_Pin)==RESET)	{Res -=140;Res_num+=1;}
-				if(HAL_GPIO_ReadPin(R4_GPIO_Port,R1_Pin)==RESET)	{Res -=120;Res_num+=1;}	//巡线中位	
-				if(HAL_GPIO_ReadPin(R5_GPIO_Port,R1_Pin)==RESET)	{Res =100;Res_num+=1;}	//巡线中位	
-				if(HAL_GPIO_ReadPin(R6_GPIO_Port,R1_Pin)==RESET)	{Res +=120;Res_num+=1;}		
-				if(HAL_GPIO_ReadPin(R7_GPIO_Port,R1_Pin)==RESET)	{Res +=140;Res_num+=1;}	
-	//			if(HAL_GPIO_ReadPin(R8_GPIO_Port,R1_Pin)==RESET)	{Res +=150;Res_num+=1;}		//右偏限位	
-				if(Res != 0){
-					pwm_ab = PID_Postion(Res,100);									//改变目标值
-					sprintf((char *)&text,"Res:%.2lf       ",Res);		
+				SpeedTarget1 = 100;
+				SpeedTarget2 = 100;
+				if(HAL_GPIO_ReadPin(R5_GPIO_Port,R5_Pin)==SET  || HAL_GPIO_ReadPin(R3_GPIO_Port,R3_Pin)==SET ||
+				    HAL_GPIO_ReadPin(R4_GPIO_Port,R4_Pin)==SET || HAL_GPIO_ReadPin(R6_GPIO_Port,R6_Pin)==SET    ||
+				    HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==SET || HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==SET
+					){//等待非全白 进行调整
+					
+//					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,0);
+//					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,0);
+					
+					HAL_GPIO_TogglePin(E3_GPIO_Port,E3_Pin);					
+		//			if(HAL_GPIO_ReadPin(R1_GPIO_Port,R1_Pin)==SET)	{Res -=160;Res_num+=1;}		//右偏限位
+					if(HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==SET)	{Res =-90;Res_num+=1;}	
+					if(HAL_GPIO_ReadPin(R3_GPIO_Port,R3_Pin)==SET)	{Res =-60;Res_num+=1;}
+					if(HAL_GPIO_ReadPin(R4_GPIO_Port,R4_Pin)==SET)	{Res =-30;Res_num+=1;}	//右偏
+					if(HAL_GPIO_ReadPin(R5_GPIO_Port,R5_Pin)==SET)	{Res =100;Res_num+=1;}	//巡线中位	
+					if(HAL_GPIO_ReadPin(R6_GPIO_Port,R6_Pin)==SET)	{Res =130;Res_num+=1;}	//左偏	
+					if(HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==SET)	{Res =160;Res_num+=1;}	
+		//			if(HAL_GPIO_ReadPin(R8_GPIO_Port,R1_Pin)==RESET)	{Res +=190;Res_num+=1;}		//左偏限
+				}
+				
+
+//	//			while(HAL_GPIO_ReadPin(R5_GPIO_Port,R1_Pin)==RESET);		
+//	//			__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,0);
+//	//			__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,0);
+
+				if(Res != 100){
+					//pwm_ab = PID_Postion(Res,100);									//改变目标值
+					
+					sprintf((char *)&text,"Re:%.2lf N:%d P:%d        ",Res,Res_num,pwm_ab);		
 					LCD_ShowString(4, 6, 160, 14, 14, text);	
-					SpeedTarget1 += pwm_ab;
-					SpeedTarget2 -= pwm_ab;
+					SpeedTarget1 += Res;
+					SpeedTarget2 -= Res;
+					sprintf((char *)&text,"ST1:%d,ST2:%d        ",SpeedTarget1,SpeedTarget2);		
+					LCD_ShowString(4, 22, 160, 14, 14, text); 
+				}
+				else if (Res == 100){
+					SpeedTarget1 = 100;
+					SpeedTarget2 = 100;
+					sprintf((char *)&text,"ST1:%d,ST2:%d        ",SpeedTarget1,SpeedTarget2);		
+					LCD_ShowString(4, 22, 160, 14, 14, text); 
 				}
 	//			else if (Res == 0 && Right_Flag == 0){				//前方无线，执行转(右)向	
 	//				HAL_GPIO_WritePin(IN1_GPIO_Port,IN1_Pin,GPIO_PIN_SET);	//电机方向
@@ -283,16 +326,20 @@ int main(void)
 	//				HAL_GPIO_WritePin(IN2_GPIO_Port,IN2_Pin,GPIO_PIN_SET);
 	//				Right_Flag = 1;
 	//			}
-				else if(Res == 100){
-					SpeedTarget1 = 500;
-					SpeedTarget2 = 500;
-				}
-				else if(Res == 0){
-					Stop_Flag = 1;
+				
+
+				if( Res_num >3){
+					sprintf((char *)&text,"stop              ");		
+					LCD_ShowString(4, 6, 160, 14, 14, text);
+					Star_Flag = 0;
 				} 
-				Xunlu =0;
+				Xunlu =2;
 				
 			}
+	}
+	while(Stop_Flag == 1){
+
+		LED_Blink(3,800);
 	}
     
 //		LED_Blink(3,500);
@@ -384,17 +431,29 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         
         // 3.将占空比导入至电机控制函数
         i++;
-		if(i>2){		  Xunlu = 1; }
-        if(i>4){     
+		if(i>2 && Xunlu >2 ){		  Xunlu = 1; }
+
+        if(i>3 && Motor ==0){     
 		  //HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_2);
    		  //Xunlu++;
 		  Motor = 1;
-			HAL_GPIO_TogglePin(E3_GPIO_Port,E3_Pin);
           i=0;
         }
     }
 }
-/* USER CODE END 4 */
+//void EXTI15_10_IRQHandler(void)
+//{
+//  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
+
+//  /* USER CODE END EXTI15_10_IRQn 0 */
+//  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+//  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
+//	if(Star_Flag != 1){
+//		Star_Flag = 1;
+//	}
+//  /* USER CODE END EXTI15_10_IRQn 1 */
+//}
+///* USER CODE END 4 */
 
 /**
   * @brief  This function is executed in case of error occurrence.

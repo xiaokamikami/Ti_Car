@@ -5,8 +5,8 @@
 #include "stdlib.h"
 int MotorSpeed1;  // 全局变量，LM电机当前速度数值，从编码器中获取
 int MotorSpeed2;  // 全局变量，RM电机当前速度数值，从编码器中获取
-int SpeedTarget1 = 200;	  // 全局变量，LM速度目标值
-int SpeedTarget2 = 200;	  // 全局变量，RM速度目标值
+int SpeedTarget1 = 100;	  // 全局变量，LM速度目标值
+int SpeedTarget2 = 100;	  // 全局变量，RM速度目标值
 int MotorOutput1;		  // 全局变量，LM电机输出
 int MotorOutput2;		  // 全局变量，RM电机输出
 

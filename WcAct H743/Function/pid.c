@@ -69,7 +69,7 @@ float limit;  //限幅
 static PID pid;
 void PID_Init()
 {
-    pid.kp = 2;
+    pid.kp = 1;
     pid.ki = 0;
     pid.kd = 0;
     pid.limit = 0;
@@ -80,7 +80,7 @@ void PID_Init()
 // 位置式PID控制
 float PID_Postion(int Infrared,int Target)
 {
-	float pwm = 0;
+	int pwm = 0;
 		pid.ek = Target - Infrared; // 计算当前误差
 		pid.ek_sum += pid.ek;      //求出偏差的积分
 		pwm = pid.kp*pid.ek + pid.ki*pid.ek_sum + 
