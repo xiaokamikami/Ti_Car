@@ -45,6 +45,9 @@ static uint8_t Mode = 0;
 static uint8_t text[20];
 static uint8_t Douck_V = 70 ; //舵机角度
 static uint8_t Black_bock = 50;
+static float Time_Sitck = 0;	//变换时间
+static float Time_Sum = 0;		//累积时间
+static uint8_t Time_Set = 10;	//时间设置
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -200,9 +203,9 @@ int main(void)
   #endif
   MPU_Config();
   CPU_CACHE_Enable();
-	int Res = 0;
-	uint8_t Res_num = 0;
-	int pwm_ab = 0;
+	static int Res = 0;
+	static uint8_t Res_num = 0;
+	static int pwm_ab = 0;
 //	uint8_t Right_Flag = 0;
 	uint8_t Stop_Flag = 0;
 	uint8_t Star_Flag = 0;
@@ -291,16 +294,20 @@ int main(void)
 
 
 	while(Star_Flag == 1){ 
-		if(HAL_GPIO_ReadPin(KEY_GPIO_Port,KEY_Pin)== RESET){
-			while(HAL_GPIO_ReadPin(KEY_GPIO_Port,KEY_Pin)== RESET);
-			if(Mode<=5){
-			Mode ++;
-			}
-			else{Mode = 0;}
-			HAL_GPIO_TogglePin(E3_GPIO_Port,E3_Pin);
-		}
+		 /* 时间切换  */
+//		if(HAL_GPIO_ReadPin(KEY_GPIO_Port,KEY_Pin)== RESET){
+//			while(HAL_GPIO_ReadPin(KEY_GPIO_Port,KEY_Pin)== RESET);
+//			if(Time_Set<=20){
+//				Time_Set ++;
+//			}
+//			else{Time_Set = 10;}
+//			sprintf((char *)&text,"Time:%d          ",Time_Set);		
+//			LCD_ShowString(4, 6, 160, 14, 14, text);
+//			HAL_GPIO_TogglePin(E3_GPIO_Port,E3_Pin);
+//		}
+		SpeedTarget1 = 180;SpeedTarget2 = 180;
 		  /* 模式切换 (角度) */
-		if( Mode == 0){ SpeedTarget1 = 180;SpeedTarget2 = 180;}
+		if( Mode == 0){ }
 		
 		/**************** 巡线控制 ******************/	
 			
@@ -357,11 +364,25 @@ int main(void)
 						Star_Flag = 0;
 						
 					}
-					sprintf((char *)&text,"Duoji:%d  ",Douck_V);		
+					sprintf((char *)&text,"Duoji:%d    ",Douck_V);		
 					LCD_ShowString(4, 55, 160, 14, 14, text);
-					HAL_Delay(100);
 					Black_Flag = 1;
+					/* 时间计算 */	
 					Black_bock --;
+					Time_Sitck = Res_stick;
+					Time_Sum += Res_stick;
+					Res_stick = 0;
+					sprintf((char *)&text,"Time:%d T_Sum:%.1lf  ",Time_Set,Time_Sum/10);		
+					LCD_ShowString(4, 6, 160, 14, 14, text);
+					if(Time_Sitck<(Time_Set/50) )
+					{
+						SpeedTarget1 = 180;SpeedTarget2 = 180;
+					}
+					else if( Time_Sitck > (Time_Set/50) )
+					{
+						SpeedTarget1 = 270;SpeedTarget2 = 270;
+					}
+					
 				}
 //				else if(Black_Flag == 1){		
 //					if(HAL_GPIO_ReadPin(R5_GPIO_Port,R5_Pin)==RESET  && HAL_GPIO_ReadPin(R3_GPIO_Port,R3_Pin)==RESET &&
@@ -521,9 +542,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         i++;
 			if(dj < Douck_V){
 				if(( Douck_V - dj )<5){
-					dj+=1;
+					dj+=2;
 				}
-				else{dj+=3;
+				else{dj+=5;
 				}
 				
 			    __HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,dj);
@@ -537,7 +558,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				
 			    __HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,dj);
 			}
-		//Res_stick++;
+		Res_stick++;
 		//if(i>2 && Xunlu >2 ){		  Xunlu = 1; }
 		if(i>1 && Xunlu ==0) {Xunlu = 1;}
         if(i>2 && Motor ==0){     
@@ -559,10 +580,13 @@ void EXTI15_10_IRQHandler(void)
   /* USER CODE END EXTI15_10_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */
-	if(Mode<=5){
-		Mode ++;
-	}
-	else{Mode = 0;}
+	if(Time_Set<=20){
+		Time_Set ++;
+		}
+	else{Time_Set = 10;}
+	sprintf((char *)&text,"Time:%d T_Sum:%.1lf  ",Time_Set,Time_Sum/10);		
+	LCD_ShowString(4, 6, 160, 14, 14, text);
+
 	HAL_GPIO_TogglePin(E3_GPIO_Port,E3_Pin);
   /* USER CODE END EXTI15_10_IRQn 1 */
 }
