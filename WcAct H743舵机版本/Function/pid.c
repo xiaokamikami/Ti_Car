@@ -1,10 +1,10 @@
 #include "pid.h"
 // 2.增量式PID控制器
-int Error_Last1,Error_Prev1;          // 上一次偏差值，上上次误差
-int Error_Last2,Error_Prev2;          // 上一次偏差值，上上次误差
-int Pwm_add1,Pwm,Pwm_last1;                    // PWM增量，PWM输出占空比
-int Pwm_add2,Pwm,Pwm_last2;                    // PWM增量，PWM输出占空比
-float Kp = 0.13	, Ki = 0.1, Kd = 0.1;       // PID系数，这里只用到PI控制器
+int Error_Last1=0,Error_Prev1=0;          // 上一次偏差值，上上次误差
+int Error_Last2=0,Error_Prev2=0;          // 上一次偏差值，上上次误差
+int Pwm_add1 = 300,Pwm1 =300,Pwm_last1 = 300;                    // PWM增量，PWM输出占空比
+int Pwm_add2 = 300,Pwm2 =300,Pwm_last2 = 300;                    // PWM增量，PWM输出占空比
+float Kp = 0.12	, Ki = 0.08, Kd = 0;       // PID系数，这里只用到PI控制器
 
 int SpeedInnerControl1(int Speed,int Target) // 速度内环控制
 {
@@ -21,14 +21,14 @@ int SpeedInnerControl1(int Speed,int Target) // 速度内环控制
 			  Kd * (Error - 2.0f * Error_Last1 + Error_Prev1)	  // 微分
               ;  // 加一的目的是如果输出信号为0时，系统将进入失控状态
 	
-    Pwm = Pwm_add1+Pwm_last1;		              // 原始量+增量 = 输出量
-	Pwm_last1 = Pwm;					  //保存上次PWM值
+    Pwm1 = Pwm_add1+Pwm_last1;		              // 原始量+增量 = 输出量
+	Pwm_last1 = Pwm1;					  //保存上次PWM值
 	Error_Prev1 = Error_Last1;	  	  // 保存上上次误差
     Error_Last1 = Error;	              // 保存上次偏差
 
-    if(Pwm >= 1000) Pwm = 1000;	      // 限幅
-    if(Pwm <=-1000) Pwm = -1000;
-    return Pwm;	                      // 返回输出值
+    if(Pwm1 >= 1000) Pwm1 = 1000;	      // 限幅
+    if(Pwm1 <=-1000) Pwm1 = -1000;
+    return Pwm1;	                      // 返回输出值
 } 
 int SpeedInnerControl2(int Speed,int Target) // 速度内环控制
 {
@@ -45,14 +45,14 @@ int SpeedInnerControl2(int Speed,int Target) // 速度内环控制
 			  Kd * (Error - 2.0f * Error_Last2 + Error_Prev2)	  // 微分
               ;  // 加一的目的是如果输出信号为0时，系统将进入失控状态
 	
-    Pwm = Pwm_add2+Pwm_last2;		              // 原始量+增量 = 输出量
-	Pwm_last2 = Pwm;					  //保存上次PWM值
+    Pwm2 = Pwm_add2+Pwm_last2;		              // 原始量+增量 = 输出量
+	Pwm_last2 = Pwm2;					  //保存上次PWM值
 	Error_Prev2 = Error_Last2;	  	  // 保存上上次误差
     Error_Last2 = Error;	              // 保存上次偏差
 
-    if(Pwm >= 1000) Pwm = 1000;	      // 限幅
-    if(Pwm <=-1000) Pwm = -1000;
-    return Pwm;	                      // 返回输出值
+    if(Pwm2 >= 1000) Pwm2 = 1000;	      // 限幅
+    if(Pwm2 <=-1000) Pwm2 = -1000;
+    return Pwm2;	                      // 返回输出值
 } 
 
 //pwm=Kp*e(k)+Ki*∑e(k)+Kd[e（k）-e(k-1)]
