@@ -67,7 +67,7 @@ static void Motor_Speed(int SpeedTarget1,int SpeedTarget2){
 				
 				if(MotorOutput1 < 0){		//减速
 
-					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,200);
+					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,0);
 //					sprintf((char *)&text,"Mpd1:%d,Mot1:%d       ",MotorSpeed1,200);		
 //					LCD_ShowString(4, 38, 160, 14, 14, text);
 				}
@@ -81,7 +81,7 @@ static void Motor_Speed(int SpeedTarget1,int SpeedTarget2){
 				
 				if(MotorOutput2 < 0){		//减速
 
-					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,200);
+					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,0);
 //					sprintf((char *)&text,"Mpd2:%d,Mot2:%d       ",MotorSpeed2,200);		
 //					LCD_ShowString(4, 55, 160, 14, 14, text);
 				}
@@ -210,9 +210,9 @@ int main(void)
 	uint8_t Stop_Flag = 0;
 	uint8_t Star_Flag = 0;
 	uint8_t Black_Flag = 0;	//黑白计数
-
-	SpeedTarget1 = 300;	  // 全局变量，LM速度目标值
-	SpeedTarget2 = 300;	  // 全局变量，RM速度目标值
+	uint8_t Right_Flag = 0;	//黑白计数
+	SpeedTarget1 = 180;	  // 全局变量，LM速度目标值
+	SpeedTarget2 = 180;	  // 全局变量，RM速度目标值
 	MotorOutput1 = 300;
 	MotorOutput2 = 300;
   /* USER CODE END 1 */
@@ -243,6 +243,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM7_Init();
   MX_TIM5_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 	LCD_Test();
 
@@ -284,12 +285,16 @@ int main(void)
 //			}
 //			
 //		}
-		__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,500);
-		__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,500);
-		HAL_Delay(10);  //10ms启动电机时间
 
+		__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,300);
+		__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,300);
+		//HAL_Delay(10);  //10ms启动电机时间
+		HAL_TIM_Base_Start_IT(&htim7);                // 使能定时器中断(100ms)
+		HAL_TIM_Base_Start_IT(&htim6);                // 使能定时器中断(10ms)
+		HAL_GPIO_WritePin(Bee_GPIO_Port,Bee_Pin,GPIO_PIN_RESET);
+		HAL_Delay(100);
+		HAL_GPIO_WritePin(Bee_GPIO_Port,Bee_Pin,GPIO_PIN_SET);
 
-		HAL_TIM_Base_Start_IT(&htim7);                // 使能定时器中断(10ms)
 	}
 
 
@@ -320,44 +325,53 @@ int main(void)
 				if(Black_Flag == 0){
 					while(HAL_GPIO_ReadPin(R5_GPIO_Port,R5_Pin)==RESET  && HAL_GPIO_ReadPin(R3_GPIO_Port,R3_Pin)==RESET &&
 				    HAL_GPIO_ReadPin(R4_GPIO_Port,R4_Pin)==RESET && HAL_GPIO_ReadPin(R6_GPIO_Port,R6_Pin)==RESET    &&
-				    HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==RESET && HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==RESET
+				    HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==RESET && HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==RESET	&&
+					HAL_GPIO_ReadPin(R1_GPIO_Port,R1_Pin)==RESET && HAL_GPIO_ReadPin(R8_GPIO_Port,R8_Pin)==RESET
 					);//等待非全白 进行调整		
 //					if(HAL_GPIO_ReadPin(R5_GPIO_Port,R5_Pin)==SET  || HAL_GPIO_ReadPin(R3_GPIO_Port,R3_Pin)==SET ||
 //				    HAL_GPIO_ReadPin(R4_GPIO_Port,R4_Pin)==SET || HAL_GPIO_ReadPin(R6_GPIO_Port,R6_Pin)==SET    ||
 //				    HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==SET || HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==SET
 //					){
 						HAL_GPIO_TogglePin(E3_GPIO_Port,E3_Pin);					
-		//			if(HAL_GPIO_ReadPin(R1_GPIO_Port,R1_Pin)==SET)	{Res -=160;Res_num+=1;}		//右偏限位
-					if(HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==SET)	{Douck_V =100;Res = -150;Res_num+=1;}	
-					if(HAL_GPIO_ReadPin(R3_GPIO_Port,R3_Pin)==SET)	{Douck_V =95;Res = -100;Res_num+=1;}
-					if(HAL_GPIO_ReadPin(R4_GPIO_Port,R4_Pin)==SET)	{Douck_V =85;Res = -50 ;Res_num+=1;}	//右偏
-					if(HAL_GPIO_ReadPin(R5_GPIO_Port,R5_Pin)==SET)	{Douck_V =76;Res = 0   ;Res_num+=1;}	//巡线中位	
-					if(HAL_GPIO_ReadPin(R6_GPIO_Port,R6_Pin)==SET)	{Douck_V =68;Res = 50  ;Res_num+=1;}	//左偏	
-					if(HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==SET)	{Douck_V =63;Res = 100 ;Res_num+=1;}	
-		//			if(HAL_GPIO_ReadPin(R8_GPIO_Port,R1_Pin)==RESET)	{Res +=190;Res_num+=1;}		//左偏限
+					if(HAL_GPIO_ReadPin(R1_GPIO_Port,R1_Pin)==SET)	{Douck_V =105;Res_num+=1;}		//右偏限位
+					if(HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==SET)	{Douck_V =104;Res = -150;Res_num+=1;}	
+					if(HAL_GPIO_ReadPin(R3_GPIO_Port,R3_Pin)==SET)	{Douck_V =97;Res = -100;Res_num+=1;}
+					if(HAL_GPIO_ReadPin(R4_GPIO_Port,R4_Pin)==SET)	{Douck_V =90;Res = -50 ;Res_num+=1;}	//右偏
+					if(HAL_GPIO_ReadPin(R5_GPIO_Port,R5_Pin)==SET)	{Douck_V =83;Res = 0   ;Res_num+=1;}	//巡线中位	
+					if(HAL_GPIO_ReadPin(R6_GPIO_Port,R6_Pin)==SET)	{Douck_V =74;Res = 50  ;Res_num+=1;}	//左偏	
+					if(HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==SET)	{Douck_V =67;Res = 100 ;Res_num+=1;}	
+					if(HAL_GPIO_ReadPin(R8_GPIO_Port,R1_Pin)==SET)	{Douck_V =60;Res_num+=1;}		//左偏限
 //					}//等待非全白 进行调整					
-//					HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_1);
-//					HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_2);
-//					sprintf((char *)&text,"R_stick:%d       ",Res_stick);		
-//					LCD_ShowString(4, 22, 160, 14, 14, text); 
-					//HAL_Delay(Res_stick+time_slp);
-//					HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
-//					HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_2);
-//					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,0);
-//					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,0);
+
 					
 					
 		//		}
 					
 				/* 巡线-舵机位置控制 */	
 					if(Res_num ==1){
-						
-						__HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,Douck_V);
+						if(Black_bock <30){SpeedTarget1 = 90;SpeedTarget2 = 90;}
+						if(Douck_V >90){Right_Flag =1;}
+						else if(Right_Flag ==1){	
+							if(Douck_V <=95)	{Right_Flag = 2;}
+							
+						}
+						if(Right_Flag ==2){
+							SpeedTarget1 = 45;SpeedTarget2 = 45;
+							//__HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,65);
+						}
+						//__HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,Douck_V);
 						
 					}
 					else if(Res_num >=2){
 						Douck_V = 70;
 						__HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,70);
+						HAL_GPIO_WritePin(IN1_GPIO_Port,IN1_Pin,GPIO_PIN_SET);	//行车制动
+						HAL_GPIO_WritePin(IN2_GPIO_Port,IN2_Pin,GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(IN3_GPIO_Port,IN3_Pin,GPIO_PIN_SET);
+						HAL_GPIO_WritePin(IN4_GPIO_Port,IN4_Pin,GPIO_PIN_RESET);
+						__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,800);
+						__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,800);
+						HAL_Delay(200);
 						__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,0);
 						__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,0);
 						Stop_Flag = 1;
@@ -374,14 +388,17 @@ int main(void)
 					Res_stick = 0;
 					sprintf((char *)&text,"Time:%d T_Sum:%.1lf  ",Time_Set,Time_Sum/10);		
 					LCD_ShowString(4, 6, 160, 14, 14, text);
-					if(Time_Sitck<(Time_Set/50) )
-					{
-						SpeedTarget1 = 180;SpeedTarget2 = 180;
-					}
-					else if( Time_Sitck > (Time_Set/50) )
-					{
-						SpeedTarget1 = 270;SpeedTarget2 = 270;
-					}
+//					if(Right_Flag ==0){
+						if(Time_Sitck<(Time_Set/50) )
+						{
+							SpeedTarget1 = 90;SpeedTarget2 = 90;
+						}
+						else if( Time_Sitck > (Time_Set/50) )
+						{
+							SpeedTarget1 = 180;SpeedTarget2 = 180;
+						}
+					//}
+					
 					
 				}
 //				else if(Black_Flag == 1){		
@@ -395,44 +412,12 @@ int main(void)
 				else if (Black_Flag == 1){
 					while(HAL_GPIO_ReadPin(R5_GPIO_Port,R5_Pin)==SET  || HAL_GPIO_ReadPin(R3_GPIO_Port,R3_Pin)==SET ||
 				    HAL_GPIO_ReadPin(R4_GPIO_Port,R4_Pin)==SET || HAL_GPIO_ReadPin(R6_GPIO_Port,R6_Pin)==SET    ||
-				    HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==SET || HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==SET
+				    HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==SET || HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==SET	||
+					HAL_GPIO_ReadPin(R1_GPIO_Port,R1_Pin)==SET || HAL_GPIO_ReadPin(R8_GPIO_Port,R8_Pin)==SET
 					);//等待全白 进行调整
 					Black_Flag =0;						
 				}
 				Xunlu = 0;		
-				/* 巡线-电机位置控制 */	
-//				if(Res != 300){
-//					//pwm_ab = PID_Postion(Res,300);									//改变目标值
-//					if(Res < 0){
-//						SpeedTarget1 -= Res;
-//					}
-//					sprintf((char *)&text,"Re:%.2lf N:%d P:%d        ",Res,Res_num,pwm_ab);		
-//					LCD_ShowString(4, 4, 160, 14, 14, text);	
-//					if(Res > 0){
-//						SpeedTarget2 += Res;
-//					}
-//					
-//					//SpeedTarget2 = 300;
-
-////					sprintf((char *)&text,"ST1:%d,ST2:%d        ",SpeedTarget1,SpeedTarget2);		
-////					LCD_ShowString(4, 22, 160, 14, 14, text); 
-//				}
-//				else if (Res == 300){
-//					SpeedTarget1 = 300;
-//					SpeedTarget2 = 300;
-////					sprintf((char *)&text,"ST1:%d,ST2:%d        ",SpeedTarget1,SpeedTarget2);		
-////					LCD_ShowString(4, 22, 160, 14, 14, text); 
-//				}
-//					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,SpeedTarget1);
-//					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,SpeedTarget2);
-//					sprintf((char *)&text,"POt1:%d,POt2:%d\r\n",SpeedTarget1,SpeedTarget2);		
-//					LCD_ShowString(4, 40, 160, 14, 14, text);
-
-//				if( Res_num >3){									//检测到停止线
-//					sprintf((char *)&text,"stop              ");		
-//					LCD_ShowString(4, 6, 160, 14, 14, text);
-//					Star_Flag = 0;
-//				} 
 
 
 			}
@@ -445,6 +430,10 @@ int main(void)
 			HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_2);
 			HAL_TIM_PWM_Stop(&htim5,TIM_CHANNEL_3);
 			HAL_TIM_Base_Stop_IT(&htim7);                // 使能定时器中断(10ms)
+			HAL_GPIO_WritePin(Bee_GPIO_Port,Bee_Pin,GPIO_PIN_RESET);
+			HAL_Delay(2000);
+			HAL_GPIO_WritePin(Bee_GPIO_Port,Bee_Pin,GPIO_PIN_SET);
+
 			
 			Stop_Flag = 0;
 		}
@@ -533,44 +522,44 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     static unsigned char i = 0;
 	static unsigned char dj = 70;
     if (htim == (&htim7))
-    {
-
-        // 1.获取电机速度
-        GetMotorPulse();
-        
-        // 3.将占空比导入至电机控制函数
-        i++;
+    {	
 			if(dj < Douck_V){
 				if(( Douck_V - dj )<5){
-					dj+=2;
+					dj+=1;
 				}
 				else{dj+=5;
-				}
-				
+			}
+				dj = Douck_V;
 			    __HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,dj);
 			}
 			else if (dj > Douck_V){
-				if(( dj - Douck_V )<5){
+				if(( dj - Douck_V )<=5){
 					dj-=1;
 				}
-				else{dj-=3;
+				else{dj-=5;
 				}
 				
 			    __HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,dj);
 			}
 		Res_stick++;
 		//if(i>2 && Xunlu >2 ){		  Xunlu = 1; }
-		if(i>1 && Xunlu ==0) {Xunlu = 1;}
-        if(i>2 && Motor ==0){     
+		if(Xunlu ==0) {Xunlu = 1;}
+       
 		  //HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_2);
    		  //Xunlu++;
-			Motor = 1;
 
-			Motor_Speed(SpeedTarget1,SpeedTarget2);
 			
-			i = 0;
+			
         }
-
+    if (htim == (&htim6))
+    {		      
+		if(Motor ==0){     
+			 // 1.获取电机速度
+			GetMotorPulse();
+			Motor = 1;
+			// 3.将占空比导入至电机控制函数
+			Motor_Speed(SpeedTarget1,SpeedTarget2);
+		}
     }
 }
 void EXTI15_10_IRQHandler(void)
