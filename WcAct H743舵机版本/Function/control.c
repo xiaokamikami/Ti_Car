@@ -24,7 +24,7 @@ void GetMotorPulse(void)
 
   }
   else{MotorSpeed1 = (abs(MotorSpeed1)*180);}
-   MotorSpeed1 /= 2;
+   MotorSpeed1 /= 6;
   //MotorSpeed = (short)(__HAL_TIM_GET_COUNTER(&htim3));
   __HAL_TIM_SET_COUNTER(&htim3,0);  // 计数器清零
   
@@ -35,7 +35,7 @@ void GetMotorPulse(void)
 
   }
   else{MotorSpeed2 = (abs(MotorSpeed2)*180);}
-  MotorSpeed2 /= 2;
+  MotorSpeed2 /= 6;
   //MotorSpeed = (short)(__HAL_TIM_GET_COUNTER(&htim3));
   __HAL_TIM_SET_COUNTER(&htim4,0);  // 计数器清零
 

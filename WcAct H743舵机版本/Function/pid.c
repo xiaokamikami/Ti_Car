@@ -4,7 +4,7 @@ int Error_Last1=0,Error_Prev1=0;          // 上一次偏差值，上上次误差
 int Error_Last2=0,Error_Prev2=0;          // 上一次偏差值，上上次误差
 int Pwm_add1 = 500,Pwm1 =500,Pwm_last1 = 500;                    // PWM增量，PWM输出占空比
 int Pwm_add2 = 500,Pwm2 =500,Pwm_last2 = 500;                    // PWM增量，PWM输出占空比
-float Kp = 0.12	, Ki = 0.08, Kd = 0;       // PID系数，这里只用到PI控制器
+float Kp = 0.1	, Ki = 0.1, Kd = 0.03;       // PID系数，这里只用到PI控制器
 
 int SpeedInnerControl1(int Speed,int Target) // 速度内环控制
 {
