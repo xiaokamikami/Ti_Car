@@ -56,6 +56,8 @@ static uint8_t Time_Set = 10;	//时间设置
 	static uint8_t Star_Flag = 0;
 	static uint8_t Black_Flag = 0;	//黑白计数
 	static uint8_t Right_Flag = 0;	//黑白计数
+extern int Pwm_add1 ,Pwm1 ,Pwm_last1 ;                    // PWM增量，PWM输出占空比
+extern int Pwm_add2 ,Pwm2 ,Pwm_last2 ;                    // PWM增量，PWM输出占空比
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -64,6 +66,7 @@ static uint8_t Time_Set = 10;	//时间设置
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+
 static void Motor_Speed(int SpeedTarget1,int SpeedTarget2){
 	  /* 调速 */	  	   
 		if( Motor == 1 ){
@@ -74,29 +77,38 @@ static void Motor_Speed(int SpeedTarget1,int SpeedTarget2){
 				MotorOutput1 = SpeedInnerControl1(MotorSpeed1,SpeedTarget1);//PID控制器，取回占空比
 				
 				if(MotorOutput1 < 0){		//减速
+//					HAL_GPIO_WritePin(IN3_GPIO_Port,IN3_Pin,GPIO_PIN_SET);	//电机1反转
+//					HAL_GPIO_WritePin(IN4_GPIO_Port,IN4_Pin,GPIO_PIN_RESET);
+//					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,300);
 
-					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,0);
-//					sprintf((char *)&text,"Mpd1:%d,Mot1:%d       ",MotorSpeed1,200);		
-//					LCD_ShowString(4, 38, 160, 14, 14, text);
+//					HAL_GPIO_WritePin(IN3_GPIO_Port,IN3_Pin,GPIO_PIN_RESET);	//电机1正转
+//					HAL_GPIO_WritePin(IN4_GPIO_Port,IN4_Pin,GPIO_PIN_SET);
+					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,0);
 				}
 				else{						//加速
+
+//					HAL_GPIO_WritePin(IN3_GPIO_Port,IN3_Pin,GPIO_PIN_RESET);	//电机1正转
+//					HAL_GPIO_WritePin(IN4_GPIO_Port,IN4_Pin,GPIO_PIN_SET);
 					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,MotorOutput1);
-//					sprintf((char *)&text,"Mpd1:%d,Mot1:%d       ",MotorSpeed1,MotorOutput1);		
-//					LCD_ShowString(4, 38, 160, 14, 14, text);
+
 				}
 				//*********电机2**********//
 				MotorOutput2 = SpeedInnerControl2(MotorSpeed2,SpeedTarget2);//PID控制器，取回占空比
 				
 				if(MotorOutput2 < 0){		//减速
-
+//					HAL_GPIO_WritePin(IN1_GPIO_Port,IN1_Pin,GPIO_PIN_SET);	//电机2反转
+//					HAL_GPIO_WritePin(IN2_GPIO_Port,IN2_Pin,GPIO_PIN_RESET);
+//					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,300);
+//					
+//					HAL_GPIO_WritePin(IN1_GPIO_Port,IN1_Pin,GPIO_PIN_RESET);	//电机2正转
+//					HAL_GPIO_WritePin(IN2_GPIO_Port,IN2_Pin,GPIO_PIN_SET);
 					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,0);
-//					sprintf((char *)&text,"Mpd2:%d,Mot2:%d       ",MotorSpeed2,200);		
-//					LCD_ShowString(4, 55, 160, 14, 14, text);
 				}
 				else{						//加速
+//					HAL_GPIO_WritePin(IN1_GPIO_Port,IN1_Pin,GPIO_PIN_RESET);	//电机2正转
+//					HAL_GPIO_WritePin(IN2_GPIO_Port,IN2_Pin,GPIO_PIN_SET);
 					__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,MotorOutput2);
-//					sprintf((char *)&text,"Mpd2:%d,Mot2:%d       ",MotorSpeed2,MotorOutput2);		
-//					LCD_ShowString(4, 55, 160, 14, 14, text);
+
 				}
 
 	//			sprintf((char *)&aTxBuffer,"Mpd2=%d,Mpd1=%d,",MotorSpeed2,MotorSpeed1);
@@ -126,14 +138,14 @@ static void Xunlu_Bk(void){
 					HAL_GPIO_ReadPin(R1_GPIO_Port,R1_Pin)==SET || HAL_GPIO_ReadPin(R8_GPIO_Port,R8_Pin)==SET
 					){	//如果有一个黑 进行调整
 						HAL_GPIO_TogglePin(E3_GPIO_Port,E3_Pin);					
-						if(HAL_GPIO_ReadPin(R1_GPIO_Port,R1_Pin)==SET)	{Douck_V =100;Res_num+=1;}		//右偏限位
-						if(HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==SET)	{Douck_V =94;Res_num+=1;}	
-						if(HAL_GPIO_ReadPin(R3_GPIO_Port,R3_Pin)==SET)	{Douck_V =88;Res_num+=1;}
-						if(HAL_GPIO_ReadPin(R4_GPIO_Port,R4_Pin)==SET)	{Douck_V =82;Res_num+=1;}	//右偏
-						if(HAL_GPIO_ReadPin(R5_GPIO_Port,R5_Pin)==SET)	{Douck_V =76;Res_num+=1;}	//巡线中位	
-						if(HAL_GPIO_ReadPin(R6_GPIO_Port,R6_Pin)==SET)	{Douck_V =70;Res_num+=1;}	//左偏	
-						if(HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==SET)	{Douck_V =64;Res_num+=1;}	
-						if(HAL_GPIO_ReadPin(R8_GPIO_Port,R8_Pin)==SET)	{Douck_V =58;Res_num+=1;}		//左偏限
+						if(HAL_GPIO_ReadPin(R1_GPIO_Port,R1_Pin)==SET)	{Douck_V =95;Res_num+=1;}		//右偏限位
+						if(HAL_GPIO_ReadPin(R2_GPIO_Port,R2_Pin)==SET)	{Douck_V =90;Res_num+=1;}	
+						if(HAL_GPIO_ReadPin(R3_GPIO_Port,R3_Pin)==SET)	{Douck_V =85;Res_num+=1;}
+						if(HAL_GPIO_ReadPin(R4_GPIO_Port,R4_Pin)==SET)	{Douck_V =80;Res_num+=1;}	//右偏
+						if(HAL_GPIO_ReadPin(R5_GPIO_Port,R5_Pin)==SET)	{Douck_V =70;Res_num+=1;}	//巡线中位	
+						if(HAL_GPIO_ReadPin(R6_GPIO_Port,R6_Pin)==SET)	{Douck_V =60;Res_num+=1;}	//左偏	
+						if(HAL_GPIO_ReadPin(R7_GPIO_Port,R7_Pin)==SET)	{Douck_V =57;Res_num+=1;}	
+						if(HAL_GPIO_ReadPin(R8_GPIO_Port,R8_Pin)==SET)	{Douck_V =55;Res_num+=1;}		//左偏限
 						Xunlu = 0;
 						Black_Flag = 1;
 						/* 时间计算 */	
@@ -148,21 +160,27 @@ static void Xunlu_Bk(void){
 						/* 巡线-舵机位置控制 */	
 							if(Res_num ==1){
 								if(Black_bock <30){SpeedTarget1 = 90;SpeedTarget2 = 90;}
-								if(Douck_V >90){Right_Flag =1;}
-								else if(Right_Flag ==1){	
+								if(Douck_V >80){Right_Flag =1;}
+								else if(Right_Flag ==1){					//转向记录
 									if(Douck_V <=90)	{Right_Flag = 2;}
 									
 								}
-								if(Right_Flag ==2){
+								if(Right_Flag ==2){							//完成转向
 									SpeedTarget1 = 120;SpeedTarget2 = 120;
-									//__HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,65);
+									Pwm_add1 = 200,Pwm1 =200,Pwm_last1 = 200;                    // PWM增量，PWM输出占空比
+								    Pwm_add2 = 200,Pwm2 =200,Pwm_last2 = 200;                    // PWM增量，PWM输出占空比
+									__HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,70);
+									Right_Flag++;
+								}
+								if(Right_Flag ==3){		
+										/* 时间控制 */	
 										if(Time_Sitck<(Time_Set/50) )
 										{
-											SpeedTarget1 = 60;SpeedTarget2 = 60;
+											SpeedTarget1 = 90;SpeedTarget2 = 90;
 										}
 										else if( Time_Sitck > (Time_Set/50) )
 										{
-											SpeedTarget1 = 120;SpeedTarget2 = 120;
+											SpeedTarget1 = 90;SpeedTarget2 = 90;
 										}
 								}
 								else{
@@ -172,7 +190,7 @@ static void Xunlu_Bk(void){
 										}
 										else if( Time_Sitck > (Time_Set/50) )
 										{
-											SpeedTarget1 = 180;SpeedTarget2 = 180;
+											SpeedTarget1 = 120;SpeedTarget2 = 120;
 										}
 								}
 								//__HAL_TIM_SetCompare(&htim5,TIM_CHANNEL_3,Douck_V);
@@ -412,7 +430,11 @@ int main(void)
 //			}
 //			
 //		}
-
+		sprintf((char *)&text,"Steeing");		
+		LCD_ShowString(4, 55, 160, 14, 14, text);
+		HAL_Delay(5000);		//10秒的调试时间
+		sprintf((char *)&text,"Open   ");		
+		LCD_ShowString(4, 55, 160, 14, 14, text);
 		__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_1,300);
 		__HAL_TIM_SetCompare(&htim2,TIM_CHANNEL_2,300);
 		//HAL_Delay(10);  //10ms启动电机时间
@@ -447,18 +469,16 @@ int main(void)
 			// 3.将占空比导入至电机控制函数
 			Motor_Speed(SpeedTarget1,SpeedTarget2);
 		}
-		sprintf((char *)&text,"Duoji:%d    ",Douck_V);		
-		LCD_ShowString(4, 55, 160, 14, 14, text);
-		HAL_Delay(10);
+
 		sprintf((char *)&text,"Time:%d T_Sum:%.1lf  ",Time_Set,Time_Sum/10);		
 		LCD_ShowString(4, 6, 160, 14, 14, text);	
-		HAL_Delay(10);		
+		HAL_Delay(5);		
 		sprintf((char *)&text,"POt1:%d,POt2:%d\r\n",MotorOutput1,MotorOutput2);		
 		LCD_ShowString(4, 22, 160, 14, 14, text);
-		HAL_Delay(10);
+		HAL_Delay(5);
 		sprintf((char *)&text,"Mpd1:%d,Mpd2:%d       ",MotorSpeed1,MotorSpeed2);		
 		LCD_ShowString(4, 38, 160, 14, 14, text);
-		HAL_Delay(10);
+		HAL_Delay(5);
 		while(Stop_Flag == 1){		//停止
 
 		//LED_Blink(3,800);
